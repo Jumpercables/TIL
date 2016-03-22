@@ -138,7 +138,7 @@ AND t.name       = 'Table'
 AND i.definition = d.sde_xml_id;
 ```
 
-The following is an example of the outout of the above `sql`.
+The following is an example of the output of the above `sql`.
 
 Name                       | Alias Name
 :------------------------- | :---------------------------
@@ -148,6 +148,25 @@ SDE.MM_PERSIST_INFO        | ArcFM User Information
 SDE.MM_SYSTEM_PERSIST_INFO | ArcFM System Information
 SDE.MM_SNAPPING            | ArcFM Snapping Configuration
 
+In `Oracle` you can use the `XMLTABLE` to covert the XML into a table structure, the following example shows all of the fields defined on the relationship tables.
+
+```sql
+SELECT
+    EXTRACTVALUE(XMLType(sde.sdexmltotext(d.xml_doc)), '/DERelationshipClassInfo/Name')         AS "Name",
+    EXTRACTVALUE(XMLType(sde.sdexmltotext(d.xml_doc)), '/DERelationshipClassInfo/IsAttributed') AS "Attributed" ,
+    x.Name,
+    sde.sdexmltotext(d.xml_doc)                                                                 AS "Definition"
+  FROM sde.gdb_items i,
+    sde.gdb_itemtypes t,
+    sde.sde_xml_doc1 d,
+    XMLTABLE ('/DERelationshipClassInfo/GPFieldInfoExs/GPFieldInfoEx'
+                    PASSING XMLType(sde.sdexmltotext(d.xml_doc))
+                    COLUMNS name VARCHAR2(30) PATH 'Name') x
+  WHERE i.type     = t.uuid
+  AND t.name       = 'Relationship Class'
+  AND i.definition = d.sde_xml_id
+  ORDER BY "Name";
+```
 In `.NET` you can read the definition data in a similar manner using the `XDocument` class.
 
 ```java
